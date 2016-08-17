@@ -2129,7 +2129,7 @@ define([
                 var attributesDiv = dojo.create("div", {'class': "annotation_info_editor_section"}, content);
                 var attributesLabel = dojo.create("div", {
                     'class': "annotation_info_editor_section_header",
-                    innerHTML: "Attributes"
+                    innerHTML: "Replace Model"
                 }, attributesDiv);
                 var attributesTable = dojo.create("div", {
                     'class': "attributes",
@@ -2622,7 +2622,7 @@ define([
                                     options: cannedKeys,
                                     formatter: function (tag) {
                                         if (!tag) {
-                                            return "Enter new tag";
+                                            return "replace";
                                         }
                                         return tag;
                                     },
@@ -2637,7 +2637,7 @@ define([
                                     options: cannedValues,
                                     formatter: function (value) {
                                         if (!value) {
-                                            return "Enter new value";
+                                            return "Enter replaced model ID";
                                         }
                                         return value;
                                     },
@@ -2683,11 +2683,11 @@ define([
                             if (!newTag || !newValue) {
                             }
                             else if (!oldTag || !oldValue) {
-                                addAttribute(newTag, newValue);
+                                addAttribute("replace", newValue);
                             }
                             else {
                                 if (newTag != oldTag || newValue != oldValue) {
-                                    updateAttribute(oldTag, oldValue, newTag, newValue);
+                                    updateAttribute(oldTag, oldValue, "replace", newValue);
                                 }
                             }
                             dirty = false;
