@@ -1036,7 +1036,7 @@ var SequenceTrack = declare( "SequenceTrack", DraggableFeatureTrack,
                 ok = false;
             }
             if (commentFieldValue.length == 0) {
-                alert("Please provide a justification for the sequence modification ( " + type + " ) in the Comment' field";
+                alert("Please provide a justification for the sequence modification ( " + type + " ) in the Comment' field");
                 ok = false;
             }
             if (ok) {
