@@ -279,7 +279,7 @@ public class MainPanel extends Composite {
                 sequenceSuggestBox.setText(currentSequence.getName());
 
 
-                Annotator.eventBus.fireEvent(new OrganismChangeEvent(OrganismChangeEvent.Action.LOADED_ORGANISMS, currentSequence.getName()));
+                Annotator.eventBus.fireEvent(new OrganismChangeEvent(OrganismChangeEvent.Action.LOADED_ORGANISMS, currentSequence.getName(),currentOrganism.getName()));
 
                 if (updateViewer) {
                     updateGenomicViewer();
@@ -661,13 +661,13 @@ public class MainPanel extends Composite {
     private void reloadTabPerIndex(Integer selectedItem) {
         switch (selectedItem) {
             case 0:
-                annotatorPanel.reload();
+                annotatorPanel.reload(true);
                 break;
             case 1:
                 trackPanel.reload();
                 break;
             case 2:
-                sequencePanel.reload();
+                sequencePanel.reload(true);
                 break;
             case 3:
                 organismPanel.reload();
@@ -998,5 +998,7 @@ public class MainPanel extends Composite {
         this.organismInfoList = organismInfoList;
     }
 
-
+    public static SequencePanel getSequencePanel() {
+        return sequencePanel;
+    }
 }

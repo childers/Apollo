@@ -123,10 +123,9 @@ class FeatureService {
 
     @Timed
     @Transactional
-    def generateTranscript(JSONObject jsonTranscript, Sequence sequence, boolean suppressHistory) {
+    def generateTranscript(JSONObject jsonTranscript, Sequence sequence, boolean suppressHistory, boolean useCDS = configWrapperService.useCDS()) {
         Gene gene = jsonTranscript.has(FeatureStringEnum.PARENT_ID.value) ? (Gene) Feature.findByUniqueName(jsonTranscript.getString(FeatureStringEnum.PARENT_ID.value)) : null;
         Transcript transcript = null
-        boolean useCDS = configWrapperService.useCDS()
 
         User owner = permissionService.getCurrentUser(jsonTranscript)
         // if the gene is set, then don't process, just set the transcript for the found gene
@@ -141,6 +140,14 @@ class FeatureService {
 
             if (!useCDS || transcriptService.getCDS(transcript) == null) {
                 calculateCDS(transcript);
+            }
+            else {
+                // if there are any sequence alterations that overlaps this transcript then
+                // recalculate the CDS to account for these changes
+                def sequenceAlterations = getSequenceAlterationsForFeature(transcript)
+                if (sequenceAlterations.size() > 0) {
+                    calculateCDS(transcript)
+                }
             }
 
             addTranscriptToGene(gene, transcript);
@@ -179,11 +186,20 @@ class FeatureService {
                     if (!useCDS || transcriptService.getCDS(tmpTranscript) == null) {
                         calculateCDS(tmpTranscript);
                     }
+                    else {
+                        // if there are any sequence alterations that overlaps this transcript then
+                        // recalculate the CDS to account for these changes
+                        def sequenceAlterations = getSequenceAlterationsForFeature(tmpTranscript)
+                        if (sequenceAlterations.size() > 0) {
+                            calculateCDS(tmpTranscript)
+                        }
+                    }
+
                     if (!suppressHistory) {
                         tmpTranscript.name = nameService.generateUniqueName(tmpTranscript, tmpGene.name)
                     }
 
-                    if (overlapperService.overlaps(tmpTranscript, tmpGene)) {
+                    if (tmpTranscript && tmpGene && overlapperService.overlaps(tmpTranscript, tmpGene)) {
                         log.debug "There is an overlap, adding to an existing gene"
                         transcript = tmpTranscript;
                         gene = tmpGene;
@@ -301,6 +317,14 @@ class FeatureService {
             transcript = transcriptService.getTranscripts(gene).iterator().next();
             if (!useCDS || transcriptService.getCDS(transcript) == null) {
                 calculateCDS(transcript);
+            }
+            else {
+                // if there are any sequence alterations that overlaps this transcript then
+                // recalculate the CDS to account for these changes
+                def sequenceAlterations = getSequenceAlterationsForFeature(transcript)
+                if (sequenceAlterations.size() > 0) {
+                    calculateCDS(transcript)
+                }
             }
             removeExonOverlapsAndAdjacenciesForFeature(gene)
             if (!suppressHistory) {
@@ -1582,18 +1606,17 @@ public void setTranslationEnd(Transcript transcript, int translationEnd) {
     }
 
     String generateOwnerString(Feature feature){
-        String finalOwnerString
+        if(feature.owner){
+          return feature.owner.username
+        }
         if (feature.owners) {
             String ownerString = ""
             for (owner in feature.owners) {
-                ownerString += feature.owner.username + " "
+                ownerString += owner.username + " "
             }
-            finalOwnerString = ownerString?.trim()
-        } else if (feature.owner) {
-            finalOwnerString = feature?.owner?.username
-        } else {
-            finalOwnerString = "None"
+            return ownerString
         }
+        return "None"
     }
 
     /**
@@ -1988,7 +2011,7 @@ public void setTranslationEnd(Transcript transcript, int translationEnd) {
         ArrayList<Transcript> transcriptsToUpdate = new ArrayList<Transcript>()
 
         for (Transcript eachTranscript : allSortedTranscripts) {
-            if (overlapperService.overlaps(eachTranscript, fivePrimeGene)) {
+            if (eachTranscript && fivePrimeGene && overlapperService.overlaps(eachTranscript, fivePrimeGene)) {
                 if (transcriptService.getGene(eachTranscript).uniqueName != fivePrimeGene.uniqueName) {
                     transcriptsToAssociate.add(eachTranscript)
                     genesToMerge.add(transcriptService.getGene(eachTranscript))
@@ -2058,7 +2081,7 @@ public void setTranslationEnd(Transcript transcript, int translationEnd) {
                     firstTranscript.save(flush: true)
                     continue
                 }
-                if (overlapperService.overlaps(eachTranscript, firstTranscript)) {
+                if (eachTranscript && firstTranscript && overlapperService.overlaps(eachTranscript, firstTranscript)) {
                     featureRelationshipService.removeFeatureRelationship(transcriptService.getGene(eachTranscript), eachTranscript)
                     addTranscriptToGene(transcriptService.getGene(firstTranscript), eachTranscript)
                     firstTranscript.name = nameService.generateUniqueName(firstTranscript, transcriptService.getGene(firstTranscript).name)
@@ -2076,7 +2099,7 @@ public void setTranslationEnd(Transcript transcript, int translationEnd) {
         overlappingTranscripts.remove(transcript) // removing itself
         ArrayList<Transcript> transcriptsWithOverlappingOrf = new ArrayList<Transcript>()
         for (Transcript eachTranscript in overlappingTranscripts) {
-            if (overlapperService.overlaps(eachTranscript, transcript)) {
+            if (eachTranscript && transcript && overlapperService.overlaps(eachTranscript, transcript)) {
                 transcriptsWithOverlappingOrf.add(eachTranscript)
             }
         }
