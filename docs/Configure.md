@@ -33,14 +33,14 @@ apollo {
       search_exe: "/usr/local/bin/blat",
       search_class: "org.bbop.apollo.sequence.search.blat.BlatCommandLineNucleotideToNucleotide",
       name: "Blat nucleotide",
-      params: ""
+      params: "",
     ],
     blat_prot: [
       search_exe: "/usr/local/bin/blat",
       search_class: "org.bbop.apollo.sequence.search.blat.BlatCommandLineProteinToNucleotide",
       name: "Blat protein",
-      params: ""
-      tmp_dir: "/opt/apollo/tmp" //optional param, uses system tmp dir by default
+      params: "",
+//      tmp_dir: "/opt/apollo/tmp" //optional param, uses system tmp dir by default
     ]
   ]    
       
